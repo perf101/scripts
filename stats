@@ -1,0 +1,30 @@
+BEGIN {
+  print "LEGEND:"
+  print "  n = Sample Number"
+  print "  m = Mean"
+  print "  s = Standard Deviation"
+  print "  r = Relative Standard Error"
+  print "  v = Nth Value"
+  print "STREAM:"
+}
+{
+  data[n] = $1
+  n++
+  sum += $1
+  sq_sum += $1 * $1
+  mean = sum / n
+  sq_diff_sum = 0
+  for (d in data) {
+    diff = mean - data[d]
+    sq_diff_sum += diff * diff
+  }
+  stdev = sqrt(sq_diff_sum / n)
+  stder = stdev / sqrt(n)
+  rstder = 100.0 * stder / mean
+  printf "n = %7d, ", n
+  printf "m = %9.2f, ", mean
+  printf "s = %9.2f, ", stdev
+  printf "r = %5.2f%%, ", rstder
+  printf "v = %7s", $1
+  printf "\n"
+}
