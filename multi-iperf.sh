@@ -135,7 +135,7 @@ for i in `seq ${VMS}`; do
   VM_IP=${VMIPs[i-1]}
   if ${VERBOSE}; then echo "Connecting to ${VM_IP} .."; fi
   ${IPERF_CMD} -c ${VM_IP} -f m \
-    | grep -o "[0-9]\+ Mbits/sec" \
+    | grep -o "[0-9.]\+ Mbits/sec" \
     | awk -vIP=${VM_IP} '{print IP, $1}' \
     >> ${TMP} &
 done
