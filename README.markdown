@@ -5,6 +5,18 @@ A collection of performance-related scripts used by
 
 ## Scripts
 
+### The `multi-iperf.sh` script
+
+[`multi-iperf.sh`](https://github.com/perf101/scripts/blob/master/multi-iperf.sh)
+is a helper script for making parallel [`iperf`](http://iperf.sourceforge.net/)
+sessions to multiple destinations. It can also track CPU usage of a (possibly
+remote) host via `xentop`. For all options, type `./multi-iperf.sh -h`.
+
+    $ ./multi-iperf.sh -i 10.1.2.110,10.1.2.111 -a
+    10.1.2.110 931
+    10.1.2.111 937
+    AGGREGATE 1868
+
 ### The `stats` script
 
 [`stats`](https://github.com/perf101/scripts/blob/master/stats) is used for
