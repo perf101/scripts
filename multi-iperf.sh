@@ -5,6 +5,10 @@
 # Author:            Rok Strnisa <rok@strnisa.com>
 # Source:            https://github.com/perf101/scripts
 
+# FAIL IF ANY COMMAND FAILS
+set -e
+set -o errexit
+
 # DEFAULTS
 AGGREGATE=false
 BASENAME=`basename ${0}`
@@ -101,6 +105,10 @@ while [ -n "${1}" ]; do
   esac
   shift
 done
+
+# FAIL IF A VARIABLE IS NOT SET
+set -u
+set -o nounset
 
 # VARIABLE CONSISTENCY CHECK AND POSTPROCESSING
 if [ -z "${VMS}" ]; then
