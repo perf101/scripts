@@ -7,7 +7,6 @@
 
 # FAIL IF ANY COMMAND FAILS
 set -e
-set -o errexit
 
 # DEFAULTS
 AGGREGATE=false
@@ -108,7 +107,6 @@ done
 
 # FAIL IF A VARIABLE IS NOT SET
 set -u
-set -o nounset
 
 # VARIABLE CONSISTENCY CHECK AND POSTPROCESSING
 if [ -z "${VMS}" ]; then
