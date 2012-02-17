@@ -10,7 +10,6 @@ set -e
 
 # DEFAULTS
 AGGREGATE=false
-BASENAME=`basename ${0}`
 B_SIZE=
 OUT=
 SIMPLE=false
@@ -23,6 +22,7 @@ W_SIZE=
 XENTOP_HOST=
 
 # USAGE
+BASENAME=`basename ${0}`
 USAGE_PREFIX="Usage: ${BASENAME} "
 INDENT=`printf "%${#USAGE_PREFIX}s" " "`
 USAGE="${USAGE_PREFIX}[-h|--help] [-i <IP,IP,..>] [-n <INT>] [-t <INT>] 

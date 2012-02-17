@@ -5,6 +5,24 @@ A collection of performance-related scripts used by
 
 ## Scripts
 
+### The `exclusive-pin.sh` script
+
+[`exclusive-pin.sh`](https://github.com/perf101/scripts/blob/master/exclusive-pin.sh)
+is a helper script for pinning `dom0`'s VCPUs to initial physical CPUs, and
+pinning VCPUs of the online user domains to the remaining physical CPUs. For
+usage instructions, type `./exclusive-pin.sh -h`.
+
+    $ ./exclusive-pin.sh --dry-run
+    xl vcpu-pin 0 0 0
+    xl vcpu-pin 0 1 1
+    xl vcpu-pin 0 2 2
+    xl vcpu-pin 0 3 3
+    xl vcpu-pin 17 0 4-23
+    xl vcpu-pin 17 1 4-23
+    xl vcpu-pin 17 2 4-23
+    xl vcpu-pin 17 3 4-23
+    $ ./exclusive-pin.sh
+
 ### The `multi-iperf.sh` script
 
 [`multi-iperf.sh`](https://github.com/perf101/scripts/blob/master/multi-iperf.sh)
