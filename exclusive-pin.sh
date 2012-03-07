@@ -3,6 +3,7 @@
 # Title:             exclusive-pin.sh
 # Description:       A helper script for putting dom0 on exclusive CPUs.
 # Author:            Rok Strnisa <rok@strnisa.com>
+# Author:            Marcus Granado <marcus.granado@citrix.com>
 # Source:            https://github.com/perf101/scripts
 
 # FAIL IF ANY COMMAND FAILS
@@ -15,6 +16,7 @@ EXEC="eval"
 BASENAME=`basename ${0}`
 USAGE_PREFIX="Usage: ${BASENAME} "
 INDENT=`printf "%${#USAGE_PREFIX}s" " "`
+PERSISTENT=
 USAGE="${USAGE_PREFIX}[-h|--help] [-n|--dry-run]
 
   -h
@@ -22,6 +24,9 @@ USAGE="${USAGE_PREFIX}[-h|--help] [-n|--dry-run]
 
   -n, --dry-run
       Dry run. Only output the commands that would be executed.
+
+  -p, --persistent
+      Make the modifications persistent across reboots.
 "
 
 # OVERRIDE DEFAULTS WITH ARGUMENTS
@@ -29,6 +34,7 @@ while [ -n "${1}" ]; do
   case ${1} in
     -h | --help) echo "${USAGE}" | less -FX; exit;;
     -n | --dry-run) EXEC="echo";;
+    -p | --persistent) PERSISTENT="yes";;
     *) echo "${USAGE}" | less -FX; exit 1
   esac
   shift
@@ -64,3 +70,15 @@ for id_uuid in "${ID_UUIDS}"; do
     ${EXEC} "xl vcpu-pin ${ids[0]} ${v} ${DOM0_VCPUS}-$((ALL_VCPUS - 1))"
   done
 done
+
+if [ ! -z $PERSISTENT ]; then
+  # PERSIST VCPU PIN SETTINGS OF VMS
+  VM_UUIDS=`xe vm-list is-control-domain=false --minimal | sed 's/,/ /g'`
+  NON_DOM0_PCPUS=`seq ${DOM0_VCPUS} $((ALL_VCPUS - 1)) |tr '\n' ','|sed 's/,$//'`
+  for vm_uuid in $VM_UUIDS; do
+    ${EXEC} "xe vm-param-set uuid=$vm_uuid VCPUs-params:mask=${NON_DOM0_PCPUS}"
+  done
+fi
+
+
+
