@@ -134,13 +134,14 @@ if [ -n "${XENTOP_HOST}" ]; then
 fi
 
 # START PARALLEL IPERF SESSIONS
-IPERF_CMD="iperf${B_SIZE}${W_SIZE} -t ${TIME} -P ${THREADS}"
-if ${VERBOSE}; then echo "Using Iperf command: ${IPERF_CMD}"; fi
+IPERF_FLAGS="${B_SIZE}${W_SIZE} -t ${TIME} -P ${THREADS} -f m"
+if ${VERBOSE}; then echo "Using Iperf flags: ${IPERF_FLAGS}"; fi
 TMP=`mktemp`
 for i in `seq ${VMS}`; do
   VM_IP=${VMIPs[i-1]}
   if ${VERBOSE}; then echo "Connecting to ${VM_IP} .."; fi
-  ${IPERF_CMD} -c ${VM_IP} -f m \
+  iperf -c ${VM_IP} ${IPERF_FLAGS} \
+    | grep -v "SUM" \
     | grep -o "[0-9.]\+ Mbits/sec" \
     | awk -vIP=${VM_IP} '{print IP, $1}' \
     >> ${TMP} &
