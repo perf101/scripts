@@ -9,25 +9,25 @@
 set -e
 
 # DEFAULTS
-AGGREGATE=false
-B_SIZE=
-OUT=
-SIMPLE=false
-THREADS=1
-TIME=5
-VERBOSE=false
-declare -a VMIPs
-VMS=
-W_SIZE=
-XENTOP_HOST=
+aggregate=false
+b_size=
+out=
+simple=false
+threads=1
+duration=5
+verbose=false
+declare -a vmips
+vms=
+w_size=
+xentop_host=
 
 # USAGE
-BASENAME=`basename ${0}`
-USAGE_PREFIX="Usage: ${BASENAME} "
-INDENT=`printf "%${#USAGE_PREFIX}s" " "`
-USAGE="${USAGE_PREFIX}[-h|--help] [-i <IP,IP,..>] [-n <INT>] [-t <INT>] 
-${INDENT}[-o <PATH>|--output <PATH>] [-P <INT>] [-x <HOST>]
-${INDENT}[-b <INT>] [-w <INT>] [-f] [-v] [-a]
+basename=`basename ${0}`
+usage_prefix="Usage: ${basename} "
+indent=`printf "%${#usage_prefix}s" " "`
+usage="${usage_prefix}[-h|--help] [-i <IP,IP,..>] [-n <INT>] [-t <INT>]
+${indent}[-o <PATH>|--output <PATH>] [-P <INT>] [-x <HOST>]
+${indent}[-b <INT>] [-w <INT>] [-f] [-v] [-a]
 
   -a
       Output aggregate network throughput (in Mbps) to standard output.
@@ -60,14 +60,14 @@ ${INDENT}[-b <INT>] [-w <INT>] [-f] [-v] [-a]
       them to standard output.
 
   -P <INT>
-      Create <INT> Iperf threads per Iperf session. Default is ${THREADS}.
+      Create <INT> Iperf threads per Iperf session. Default is ${threads}.
 
   -s
       Simple output. Only outputs the aggregate number (in Mbps). Implies -a.
 
   -t <INT>
-      Set the test to last <INT> seconds. Default is ${TIME}. Recommended is
-      60 or more.
+      Set the test to last <INT> seconds. Default is ${duration}. Recommended
+      is 60 or more.
 
   -v
       Verbose. At the moment, this only shows the final Iperf configuration.
@@ -87,20 +87,20 @@ ${INDENT}[-b <INT>] [-w <INT>] [-f] [-v] [-a]
 # OVERRIDE DEFAULTS WITH ARGUMENTS
 while [ -n "${1}" ]; do
   case ${1} in
-    -a) AGGREGATE=true;;
-    -b) shift; B_SIZE=${1};;
-    -f) B_SIZE=256; W_SIZE=256;;
-    -h | --help) echo "${USAGE}" | less -FX; exit;;
-    -i) shift; IFS=',' read -ra VMIPs <<< "${1}";;
-    -n) shift; VMS=${1};;
-    -o | --output) shift; OUT=${1};;
-    -P) shift; THREADS=${1};;
-    -s) AGGREGATE=true; SIMPLE=true;;
-    -t) shift; TIME=${1};;
-    -v) VERBOSE=true;;
-    -w) shift; W_SIZE=${1};;
-    -x) shift; XENTOP_HOST=${1};;
-    *) echo "${USAGE}" | less -FX; exit 1
+    -a) aggregate=true;;
+    -b) shift; b_size=${1};;
+    -f) b_size=256; w_size=256;;
+    -h | --help) echo "${usage}" | less -FX; exit;;
+    -i) shift; IFS=',' read -ra vmips <<< "${1}";;
+    -n) shift; vms=${1};;
+    -o | --output) shift; out=${1};;
+    -P) shift; threads=${1};;
+    -s) aggregate=true; simple=true;;
+    -t) shift; duration=${1};;
+    -v) verbose=true;;
+    -w) shift; w_size=${1};;
+    -x) shift; xentop_host=${1};;
+    *) echo "${usage}" | less -FX; exit 1
   esac
   shift
 done
@@ -109,69 +109,69 @@ done
 set -u
 
 # VARIABLE CONSISTENCY CHECK AND POSTPROCESSING
-if [ -z "${VMS}" ]; then
-  VMS=${#VMIPs[@]}
+if [ -z "${vms}" ]; then
+  vms=${#vmips[@]}
 fi
-if [ ${VMS} -gt ${#VMIPs[@]} ]; then
-  echo "Error: # VMs (-n) is greater than # IPs (-VMIPs): ${VMS} > ${#VMIPs[@]}."
+if [ ${vms} -gt ${#vmips[@]} ]; then
+  echo "Error: # VMs (-n) is greater than # IPs (-VMIPs): ${vms} > ${#vmips[@]}."
   echo "See usage instructions with: $0 -h"
   exit 1
 fi
-if [ -n "${B_SIZE}" ]; then
-  B_SIZE=" -l ${B_SIZE}K"
+if [ -n "${b_size}" ]; then
+  b_size=" -l ${b_size}K"
 fi
-if [ -n "${W_SIZE}" ]; then
-  W_SIZE=" -w ${W_SIZE}K"
+if [ -n "${w_size}" ]; then
+  w_size=" -w ${w_size}K"
 fi
-XENTOP_OUT="${OUT}_xentop"
+xentop_out="${out}_xentop"
 
 # START RECORDING XENTOP USAGE ON RECEIVER
-if [ -n "${XENTOP_HOST}" ]; then
-  if ${VERBOSE}; then echo "Starting xentop logging for ${XENTOP_HOST} .."; fi
-  ssh ${XENTOP_HOST} "xentop -b -d 1 -f" > "${XENTOP_OUT}" &
-  PID=${!}
-  if ${VERBOSE}; then echo "Output file for xentop logging: ${XENTOP_OUT}"; fi
+if [ -n "${xentop_host}" ]; then
+  if ${verbose}; then echo "Starting xentop logging for ${xentop_host} .."; fi
+  ssh ${xentop_host} "xentop -b -d 1 -f" > "${xentop_out}" &
+  pid=${!}
+  if ${verbose}; then echo "Output file for xentop logging: ${xentop_out}"; fi
 fi
 
 # START PARALLEL IPERF SESSIONS
-IPERF_FLAGS="${B_SIZE}${W_SIZE} -t ${TIME} -P ${THREADS} -f m"
-if ${VERBOSE}; then echo "Using Iperf flags: ${IPERF_FLAGS}"; fi
-TMP=`mktemp`
-for i in `seq ${VMS}`; do
-  VM_IP=${VMIPs[i-1]}
-  if ${VERBOSE}; then echo "Connecting to ${VM_IP} .."; fi
-  iperf -c ${VM_IP} ${IPERF_FLAGS} \
+iperf_flags="${b_size}${w_size} -t ${duration} -P ${threads} -f m"
+if ${verbose}; then echo "Using Iperf flags: ${iperf_flags}"; fi
+tmp=`mktemp`
+for i in `seq ${vms}`; do
+  vm_ip=${vmips[i-1]}
+  if ${verbose}; then echo "Connecting to ${vm_ip} .."; fi
+  iperf -c ${vm_ip} ${iperf_flags} \
     | grep -v "SUM" \
     | grep -o "[0-9.]\+ Mbits/sec" \
-    | awk -vIP=${VM_IP} '{print IP, $1}' \
-    >> ${TMP} &
+    | awk -vIP=${vm_ip} '{print IP, $1}' \
+    >> ${tmp} &
 done
 
 # WAIT FOR THE TESTS TO COMPLETE
-sleep $((TIME + 3))
+sleep $((duration + 3))
 
 # STOP RECORDING XENTOP USAGE
-if [ -n "${XENTOP_HOST}" ]; then
-  if ${VERBOSE}; then echo "Stopping xentop logging for ${XENTOP_HOST} .."; fi
-  kill ${PID};
+if [ -n "${xentop_host}" ]; then
+  if ${verbose}; then echo "Stopping xentop logging for ${xentop_host} .."; fi
+  kill ${pid};
 fi
 
 # SORT INDIVIDUAL RESULTS
-TMP2=`mktemp`
-if ! ${SIMPLE}; then sort -o ${TMP2} ${TMP}; fi
+tmp2=`mktemp`
+if ! ${simple}; then sort -o ${tmp2} ${tmp}; fi
 
 # OUTPUT AGGREGATE THROUGHPUT TO STDOUT
-if ${AGGREGATE}; then
-  if ! ${SIMPLE}; then echo -n "AGGREGATE " >> ${TMP2}; fi
-  cat "${TMP}" | awk '{sum+=$2}END{print sum}' >> ${TMP2}
+if ${aggregate}; then
+  if ! ${simple}; then echo -n "AGGREGATE " >> ${tmp2}; fi
+  cat "${tmp}" | awk '{sum+=$2}END{print sum}' >> ${tmp2}
 fi
 
 # OUTPUT RESULTS
-if [ -n "${OUT}" ]; then
-  cp ${TMP2} ${OUT}
+if [ -n "${out}" ]; then
+  cp ${tmp2} ${out}
 else
-  cat ${TMP2}
+  cat ${tmp2}
 fi
 
 # REMOVE TEMPORARY FILES
-rm -f ${TMP} ${TMP2}
+rm -f ${tmp} ${tmp2}
