@@ -137,6 +137,7 @@ fi
 iperf_flags="${b_size}${w_size} -t ${duration} -P ${threads} -f m"
 if ${verbose}; then echo "Using Iperf flags:${iperf_flags}"; fi
 tmp=`mktemp`
+declare -a pids
 for i in `seq ${vms}`; do
   vm_ip=${vmips[i-1]}
   if ${verbose}; then echo "Connecting to ${vm_ip} .."; fi
@@ -145,10 +146,11 @@ for i in `seq ${vms}`; do
     | grep -o "[0-9.]\+ Mbits/sec" \
     | awk -vIP=${vm_ip} '{print IP, $1}' \
     >> ${tmp} &
+  pids[i]=$!
 done
 
 # WAIT FOR THE TESTS TO COMPLETE
-wait
+wait ${pids[@]}
 
 # STOP RECORDING XENTOP USAGE
 if [ -n "${xentop_host}" ]; then
