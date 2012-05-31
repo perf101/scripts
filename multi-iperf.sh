@@ -135,7 +135,7 @@ fi
 
 # START PARALLEL IPERF SESSIONS
 iperf_flags="${b_size}${w_size} -t ${duration} -P ${threads} -f m"
-if ${verbose}; then echo "Using Iperf flags: ${iperf_flags}"; fi
+if ${verbose}; then echo "Using Iperf flags:${iperf_flags}"; fi
 tmp=`mktemp`
 for i in `seq ${vms}`; do
   vm_ip=${vmips[i-1]}
@@ -148,7 +148,7 @@ for i in `seq ${vms}`; do
 done
 
 # WAIT FOR THE TESTS TO COMPLETE
-sleep $((duration + 3))
+wait
 
 # STOP RECORDING XENTOP USAGE
 if [ -n "${xentop_host}" ]; then
