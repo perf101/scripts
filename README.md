@@ -23,6 +23,10 @@ usage instructions, type `./exclusive-pin.sh -h`.
     xl vcpu-pin 17 3 4-23
     $ ./exclusive-pin.sh
 
+Note that runtime pinning of VCPUs does currently not also move VMs' memory
+regions. This means that performance might be slower than expected on NUMA
+hosts.
+
 ### The `multi-iperf.sh` script
 
 [`multi-iperf.sh`](https://github.com/perf101/scripts/blob/master/multi-iperf.sh)
