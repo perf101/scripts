@@ -49,28 +49,25 @@ dom0_vcpus=`ls -d /sys/devices/system/cpu/cpu* | wc -l`
 
 # PIN DOM0 VCPUS TO INITIAL PHYSICAL CPUS
 for v in `seq 0 $((dom0_vcpus - 1))`; do
-  ${mode} "xl vcpu-pin 0 ${v} ${v}"
+  ${mode} "xl vcpu-pin 0 ${v} 0-$((dom0_vcpus - 1))"
 done
 
 # OBTAIN THE NUMBER OF ALL PHYSICAL CPUS
 dom0_uuid=`awk -F\' '/^INSTALLATION_UUID/ {print $2}' /etc/xensource-inventory`
-all_vcpus=`xe host-cpu-list --minimal host-uuid=${dom0_uuid} | sed 's/,/ /g' | wc -w`
+all_pcpus=`xe host-cpu-list --minimal host-uuid=${dom0_uuid} | sed 's/,/ /g' | wc -w`
 
 # OBTAIN DOM ID TO DOM UUID MAPPING
 id_uuids=`list_domains | awk '{if ($1 != "id" && $1 != "0") print $1,$3}'`
 
 # FOR EACH ONLINE USER DOMAIN
-for id_uuid in "${id_uuids}"; do
-  declare -a ids
-  IFS=' ' read -ra ids <<< "${id_uuid}"
-  if [ ${#ids[@]} == 0 ]; then continue; fi
+while read dom uuid; do
   # OBTAIN THE NUMBER OF ITS VCPUS
-  vcpus=`xe vm-param-get uuid=${ids[1]} param-name=VCPUs-number`
+  vcpus=`xe vm-param-get uuid=${uuid} param-name=VCPUs-number`
   # AND PIN THEM TO NON-DOM0 PHYSICAL CPUS
   for v in `seq 0 $((vcpus - 1))`; do
-    ${mode} "xl vcpu-pin ${ids[0]} ${v} ${dom0_vcpus}-$((all_vcpus - 1))"
+    ${mode} "xl vcpu-pin ${dom} ${v} ${dom0_vcpus}-$((all_pcpus - 1))"
   done
-done
+done < <(echo "$id_uuids")
 
 if [ ! -z $persistent ]; then
   # PERSIST VCPU PIN SETTINGS OF VMS
